@@ -1,0 +1,30 @@
+{
+  "name": "zoom-webhook-serviceware",
+  "version": "1.0.0",
+  "description": "Zoom event subscription endpoint to translate Zoom Phone call_connected and call_disconnected events to Service Webhook Post Requests",
+  "main": "index.mjs",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Robert Schmidt",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.11.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.0.0",
+    "helmet": "^7.0.0",
+    "morgan": "^1.10.1",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^24.1.0",
+    "jest": "^29.0.0",
+    "nock": "^13.3.0",
+    "supertest": "^6.3.3"
+  }
+}

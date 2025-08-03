@@ -1,0 +1,38 @@
+# OpenAPI 3.0 Beispiel für den Zoom-Webhook-Endpunkt
+openapi: 3.0.3
+info:
+  title: Zoom Webhook Serviceware API
+  version: 1.0.0
+  description: API-Dokumentation für den Zoom-Webhook-Serviceware-Proxy
+servers:
+  - url: http://localhost:3000
+paths:
+  /zoom-phone-call-events:
+    post:
+      summary: Empfängt Zoom Phone Webhook Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebHookBody'
+      responses:
+        '200':
+          description: Event verarbeitet
+        '401':
+          description: Signatur ungültig
+  /health:
+    get:
+      summary: Healthcheck
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    WebHookBody:
+      type: object
+      properties:
+        event:
+          type: string
+        payload:
+          type: object

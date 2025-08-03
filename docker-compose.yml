@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  zoom-webhook-serviceware:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command: http zoom-webhook-serviceware:3000
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    depends_on:
+      - zoom-webhook-serviceware
+    ports:
+      - "4040:4040" # Web-UI für ngrok
+
+  serviceware-mock:
+    image: node:lts-alpine3.22
+    working_dir: /mock
+    volumes:
+      - ./mock-server:/mock
+      - ./node_modules:/mock/node_modules
+    command: ["node", "mock.cjs"]
+    environment:
+      - SERVICEWARE_SHARED_SECRET=${SERVICEWARE_SHARED_SECRET}
+      - PORT=4000
+    ports:
+      - "4000:4000"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
