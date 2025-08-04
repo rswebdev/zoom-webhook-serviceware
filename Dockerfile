@@ -11,7 +11,9 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # Quellcode kopieren
-COPY . .
+COPY ./index.mjs ./index.mjs
+COPY ./server.js ./server.js
+COPY ./logger.mjs ./logger.mjs
 
 # Port für Express (anpassbar, Standard 3000)
 EXPOSE 3000
