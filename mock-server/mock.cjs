@@ -1,11 +1,16 @@
 // Minimaler Mock-Server für Serviceware Webhook
 const express = require('express');
 const bodyParser = require('body-parser');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
 
 const SHARED_SECRET = process.env.SERVICEWARE_SHARED_SECRET || 'test';
+const CALL_CONNECT_ENDPOINT = process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED || '/PhoneBox/TelephonyHook/OnCallConnected';
+const CALL_DISCONNECT_ENDPOINT = process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED || '/PhoneBox/TelephonyHook/OnCallDisconnected';
 const PORT = process.env.PORT || 4000;
 
 // Middleware zur Prüfung des Shared Secret
@@ -17,12 +22,12 @@ app.use((req, res, next) => {
   res.status(401).json({ message: 'Unauthorized' });
 });
 
-app.post('/PhoneBox/TelephonyHook/OnCallConnected', (req, res) => {
+app.post(CALL_CONNECT_ENDPOINT, (req, res) => {
   console.log('OnCallConnected empfangen:', req.body);
   res.json({ status: 'received', event: 'OnCallConnected' });
 });
 
-app.post('/PhoneBox/TelephonyHook/OnCallDisconnected', (req, res) => {
+app.post(CALL_DISCONNECT_ENDPOINT, (req, res) => {
   console.log('OnCallDisconnected empfangen:', req.body);
   res.json({ status: 'received', event: 'OnCallDisconnected' });
 });
