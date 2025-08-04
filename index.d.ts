@@ -1,6 +1,9 @@
 type WebHookBody<T> = {
   event: string;
-  payload: T;
+  payload: {
+    account_id: string;
+    object: T;
+  }
   event_ts?: number;
 };
 

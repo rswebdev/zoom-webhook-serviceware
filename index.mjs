@@ -49,7 +49,7 @@ const webHookHandler = async (req, res, secretToken) => {
   const hZoomRequestTimestamp = req.header('x-zm-request-timestamp');
   
   /**
-   * @type {'endpoint.url_validation' | 'phone.caller_connected' | 'phone.caller_ended'}
+   * @type {'endpoint.url_validation' | 'phone.caller_connected' | 'phone.caller_ended' | 'phone.callee_answered' | 'phone.callee_ended' }
    */
   const bEvent = req.body.event;
   const bPayload = req.body.payload;
@@ -87,40 +87,45 @@ const webHookHandler = async (req, res, secretToken) => {
        */
       const postData = {
         toNumber: '',
-        fromNumber: ''
+        fromNumber: '',
+        event_type: bEvent,
       };
+
+      const connectWebHook = bEvent === 'phone.caller_connected' || bEvent === 'phone.callee_answered';
 
       if (bEvent === 'phone.caller_connected') {
         // POST to Serviceware OnCallConnect
-        postData.toNumber = bPayload.callee.phone_number
-        postData.fromNumber = bPayload.caller.phone_number
-
-        await axios.post(`${process.env.SERVICEWARE_API_URL}${process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED}`, postData, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.SERVICEWARE_SHARED_SECRET}`
-          }
-        }).then(() => {
-          logger.info('OnCallConnect event posted to Serviceware successfully');
-        }).catch((error) => {
-          logger.error('Error posting OnCallConnect event to Serviceware:', error);
-        });
+        postData.toNumber = bPayload.object.callee.phone_number
+        postData.fromNumber = bPayload.object.caller.phone_number
       } else if (bEvent === 'phone.caller_ended') {
         // POST to Serviceware OnCallDisconnect
-        postData.toNumber = bPayload.callee.phone_number
-        postData.fromNumber = bPayload.caller.phone_number
-        
-        await axios.post(`${process.env.SERVICEWARE_API_URL}${process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED}`, postData, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.SERVICEWARE_SHARED_SECRET}`
-          }
-        }).then(() => {
-          logger.info('OnCallDisconnect event posted to Serviceware successfully');
-        }).catch((error) => {
-          logger.error('Error posting OnCallDisconnect event to Serviceware:', error);
-        });
+        postData.toNumber = bPayload.object.callee.phone_number
+        postData.fromNumber = bPayload.object.caller.phone_number
+      } else if (bEvent === 'phone.callee_answered') {
+        // POST to Serviceware OnCallConnect
+        postData.toNumber = bPayload.object.callee.phone_number
+        postData.fromNumber = bPayload.object.caller.phone_number
+      } else if (bEvent === 'phone.callee_ended') {
+        // POST to Serviceware OnCallDisconnect
+        postData.toNumber = bPayload.object.callee.phone_number
+        postData.fromNumber = bPayload.object.caller.phone_number
+      } else {
+        logger.warn(`Unhandled event type: ${bEvent}`);
+        return;
       }
+
+      const webhook = process.env.SERVICEWARE_API_URL + (connectWebHook ? process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED : process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED);
+
+      await axios.post(webhook, postData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SERVICEWARE_SHARED_SECRET}`
+        }
+      }).then(() => {
+        logger.info(`${connectWebHook ? 'OnCallConnect' : 'OnCallDisconnect'} event posted to Serviceware successfully`);
+      }).catch((error) => {
+        logger.error(`Error posting ${connectWebHook ? 'OnCallConnect' : 'OnCallDisconnect'} event to Serviceware:`, error);
+      });
     }
   } else {
     response = { message: 'Unauthorized', status: 401 };
