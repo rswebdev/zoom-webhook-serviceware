@@ -2,7 +2,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
-const logger = require('./logger.mjs'); // Importiere den Logger
+const logger = require('./logger.mjs').default; // Importiere den Logger
 
 dotenv.config();
 

@@ -13,7 +13,7 @@ dotenv.config();
 const app = express();
 
 // Logging aktivieren
-app.use(morgan('combined'));
+// app.use(morgan('combined'));
 
 // Security Middleware
 app.use(helmet());
@@ -36,6 +36,20 @@ const hashedSignature = (secret, timestamp, message) => {
   return `v0=${hashForVerify}`;
 };
 
+const postToServiceware = async (connectWebHook, data) => {
+  const webhook = process.env.SERVICEWARE_API_URL + (connectWebHook ? process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED : process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED);
+
+  await axios.post(webhook, data, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.SERVICEWARE_SHARED_SECRET}`
+    }
+  }).then(() => {
+    logger.info(`${connectWebHook ? 'OnCallConnect' : 'OnCallDisconnect'} event posted to Serviceware successfully`);
+  }).catch((error) => {
+    logger.error(`Error posting ${connectWebHook ? 'OnCallConnect' : 'OnCallDisconnect'} event to Serviceware:`, error);
+  });
+}
 
 /**
  * 
@@ -62,7 +76,7 @@ const webHookHandler = async (req, res, secretToken) => {
   let response = { message: '', status: 500 };
 
   if (hZoomSignature === verificationSignature) {
-    logger.info('Signature verified successfully');
+    // logger.debug('Signature verified successfully');
     if (bEvent === 'endpoint.url_validation') {
       const hashForValidate = createHmac('sha256', process.env.ZOOM_VERIFICATION_TOKEN).update(bPayload.plainToken).digest('hex');
 
@@ -96,35 +110,30 @@ const webHookHandler = async (req, res, secretToken) => {
         // POST to Serviceware OnCallConnect
         postData.toNumber = bPayload.object.callee.phone_number
         postData.fromNumber = bPayload.object.caller.phone_number
+        postToServiceware(connectWebHook, postData);
+        return;
       } else if (bEvent === 'phone.caller_ended') {
         // POST to Serviceware OnCallDisconnect
         postData.toNumber = bPayload.object.callee.phone_number
         postData.fromNumber = bPayload.object.caller.phone_number
+        postToServiceware(connectWebHook, postData);
+        return;
       } else if (bEvent === 'phone.callee_answered') {
         // POST to Serviceware OnCallConnect
         postData.toNumber = bPayload.object.callee.phone_number
         postData.fromNumber = bPayload.object.caller.phone_number
+        postToServiceware(connectWebHook, postData);
+        return;
       } else if (bEvent === 'phone.callee_ended') {
         // POST to Serviceware OnCallDisconnect
         postData.toNumber = bPayload.object.callee.phone_number
         postData.fromNumber = bPayload.object.caller.phone_number
+        postToServiceware(connectWebHook, postData);
+        return;
       } else {
         logger.warn(`Unhandled event type: ${bEvent}`);
         return;
       }
-
-      const webhook = process.env.SERVICEWARE_API_URL + (connectWebHook ? process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED : process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED);
-
-      await axios.post(webhook, postData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SERVICEWARE_SHARED_SECRET}`
-        }
-      }).then(() => {
-        logger.info(`${connectWebHook ? 'OnCallConnect' : 'OnCallDisconnect'} event posted to Serviceware successfully`);
-      }).catch((error) => {
-        logger.error(`Error posting ${connectWebHook ? 'OnCallConnect' : 'OnCallDisconnect'} event to Serviceware:`, error);
-      });
     }
   } else {
     response = { message: 'Unauthorized', status: 401 };
