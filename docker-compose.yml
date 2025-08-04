@@ -1,7 +1,9 @@
-version: '3.8'
 services:
   zoom-webhook-serviceware:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: zoom-webhook-serviceware:latest
     ports:
       - "3000:3000"
     env_file:
@@ -36,6 +38,7 @@ services:
   serviceware-mock:
     image: node:lts-alpine3.22
     working_dir: /mock
+    restart: unless-stopped
     volumes:
       - ./logger.mjs:/mock/logger.mjs
       - ./mock.cjs:/mock/mock.cjs
