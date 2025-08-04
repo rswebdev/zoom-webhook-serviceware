@@ -22,7 +22,7 @@ services:
   ngrok:
     image: ngrok/ngrok:latest
     restart: unless-stopped
-    command: http zoom-webhook-serviceware:3000
+    command: "http zoom-webhook-serviceware:3000 --url satyr-immense-hedgehog.ngrok-free.app"
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     depends_on:
