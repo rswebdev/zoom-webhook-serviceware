@@ -22,11 +22,14 @@ services:
   ngrok:
     image: ngrok/ngrok:latest
     restart: unless-stopped
-    command: "http zoom-webhook-serviceware:3000 --url satyr-immense-hedgehog.ngrok-free.app"
+    command: ["http", "zoom-webhook-serviceware:3000", "--url=${NGROK_URL}"]
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+      - NGROK_URL=${NGROK_URL}
     depends_on:
       - zoom-webhook-serviceware
+    profiles:
+      - dev
     ports:
       - "4040:4040" # Web-UI für ngrok
 
@@ -34,7 +37,8 @@ services:
     image: node:lts-alpine3.22
     working_dir: /mock
     volumes:
-      - ./mock-server:/mock
+      - ./logger.mjs:/mock/logger.mjs
+      - ./mock.cjs:/mock/mock.cjs
       - ./node_modules:/mock/node_modules
     command: ["node", "mock.cjs"]
     environment:
@@ -42,6 +46,8 @@ services:
       - PORT=4000
     ports:
       - "4000:4000"
+    profiles:
+      - dev
     deploy:
       resources:
         limits:
