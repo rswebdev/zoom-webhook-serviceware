@@ -52,6 +52,11 @@ SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED= # Endpoint für Anrufverbindungen
 SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED=     # Endpoint für beendete Anrufe
 SERVICEWARE_SHARED_SECRET=  # Shared Secret für Serviceware API-Authentifizierung
 
+# Ngrok Konfiguration
+# see https://ngrok.com/docs/get-started/your-authtoken
+NGROK_AUTHTOKEN=your_ngrok_authtoken
+NGROK_URL=your_ngrok_url
+
 # Logging-Konfiguration
 LOG_LEVEL=info              # Log-Level (debug, info, warn, error)
 LOG_DIR=/tmp/logs           # Verzeichnis für Log-Dateien
@@ -88,6 +93,16 @@ Die Anwendung basiert auf Express.js und nutzt folgende Haupttechnologien:
 - Winston für das Logging
 - Axios für HTTP-Anfragen
 - Helmet, CORS und Rate Limiting für Sicherheit
+
+### Ngrok für lokale Entwicklung
+Das Projekt verwendet ngrok im Entwicklungsprofil, um lokale Webhooks für Zoom zugänglich zu machen. Mit ngrok können Sie Ihre lokale Entwicklungsumgebung über einen öffentlich zugänglichen Endpunkt testen:
+
+- **Automatische Konfiguration**: Wenn Sie `docker compose --profile dev up` ausführen, wird ngrok automatisch gestartet und erstellt einen sicheren Tunnel zu Ihrem lokalen Service.
+- **Zugriffsüberwachung**: Öffnen Sie `http://localhost:4040` in Ihrem Browser, um das ngrok-Dashboard mit allen eingehenden Anfragen einzusehen.
+- **Webhook-Konfiguration**: Verwenden Sie die von ngrok generierte URL (sichtbar im Dashboard oder in den Logs), um Ihren Zoom Webhook für Tests zu konfigurieren.
+- **Authentifizierung**: Stellen Sie sicher, dass die Umgebungsvariable `NGROK_AUTHTOKEN` in Ihrer `.env`-Datei gesetzt ist. Einen kostenlosen Auth-Token erhalten Sie nach der Registrierung auf [ngrok.com](https://ngrok.com).
+
+Diese Integration ermöglicht das einfache Testen von Webhook-Ereignissen während der Entwicklung, ohne die Notwendigkeit, Ihre Anwendung in einer öffentlich zugänglichen Umgebung bereitzustellen.
 
 ### Debugging
 Zum Aktivieren ausführlicherer Logs setzen Sie die Umgebungsvariable `LOG_LEVEL=debug`.
