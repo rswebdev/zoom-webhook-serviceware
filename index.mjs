@@ -88,7 +88,6 @@ const webHookHandler = async (req, res, secretToken) => {
       const postData = {
         toNumber: '',
         fromNumber: '',
-        event_type: bEvent,
       };
 
       const connectWebHook = bEvent === 'phone.caller_connected' || bEvent === 'phone.callee_answered';

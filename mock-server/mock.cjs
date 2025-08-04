@@ -2,6 +2,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
+const logger = require('./logger.mjs'); // Importiere den Logger
 
 dotenv.config();
 
@@ -23,15 +24,15 @@ app.use((req, res, next) => {
 });
 
 app.post(CALL_CONNECT_ENDPOINT, (req, res) => {
-  console.log('OnCallConnected empfangen:', req.body);
+  logger.info('OnCallConnected empfangen:', req.body);
   res.json({ status: 'received', event: 'OnCallConnected' });
 });
 
 app.post(CALL_DISCONNECT_ENDPOINT, (req, res) => {
-  console.log('OnCallDisconnected empfangen:', req.body);
+  logger.info('OnCallDisconnected empfangen:', req.body);
   res.json({ status: 'received', event: 'OnCallDisconnected' });
 });
 
 app.listen(PORT, () => {
-  console.log(`Serviceware Mock Server läuft auf Port ${PORT}`);
+  logger.info(`Serviceware Mock Server läuft auf Port ${PORT}`);
 });
