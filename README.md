@@ -1,53 +1,96 @@
-# zoom-webhook-serviceware
+# Zoom Webhook Serviceware
 
-Ein Docker-basiertes Node.js-Projekt, das Zoom Phone Webhook-Events entgegennimmt und an einen Serviceware-Webhook weiterleitet. Für lokale Entwicklung und Tests sind ein ngrok-Tunnel und ein Serviceware-Mock-Server integriert.
+## Übersicht
+Dieser Service fungiert als Webhook-Handler für Zoom Phone Events und leitet die relevanten Informationen an Serviceware weiter. Er verarbeitet eingehende Anrufereignisse und sendet sie an die entsprechenden Serviceware-Endpunkte.
 
-## Features
-- Empfängt und prüft Zoom Phone Webhook-Events (`call_connected`, `call_disconnected`, `url_validation`)
-- Leitet Events an Serviceware weiter (mit Shared Secret)
-- Healthcheck- und Logging-Integration
-- Docker- und Compose-Setup mit ngrok und Mock-Server
+## Funktionen
+- Empfang und Verarbeitung von Zoom Phone Webhook-Events
+- Validierung der Zoom-Webhook-Signatur für Sicherheit
+- Weiterleitung spezifischer Anrufereignisse an Serviceware
+- Unterstützung für folgende Ereignisse:
+  - `phone.caller_connected`
+  - `phone.caller_ended`
+  - `phone.callee_answered`
+  - `phone.callee_ended`
+- Healthcheck-Endpunkt
 
-## Schnellstart
+## Installation
 
-1. **.env Datei anlegen** (siehe `example.env`):
-   ```sh
-   cp example.env .env
-   # Werte in .env anpassen
-   ```
+### Voraussetzungen
+- Node.js (empfohlen: v16 oder höher)
+- npm oder yarn
+- Docker (optional, für Container-Deployment)
 
-2. **Docker Compose starten:**
-   ```sh
-   docker compose up --build
-   ```
+### Lokale Installation
+```bash
+# Repository klonen
+git clone [repository-url]
+cd zoom-webhook-serviceware
 
-3. **ngrok-URL finden:**
-   - Im Terminal oder unter http://localhost:4040
-   - Diese URL bei Zoom als Event-Subscription-Endpoint eintragen
+# Abhängigkeiten installieren
+npm install
 
-4. **Serviceware-Mock-Server:**
-   - Lauscht auf Port 4000 (intern: `serviceware-mock:4000`)
-   - Zeigt empfangene Events im Log an
+# Umgebungsvariablen konfigurieren
+cp .env.example .env
+# .env-Datei mit den erforderlichen Werten bearbeiten
 
-## Endpunkte
-- `POST /zoom-phone-call-events` – Zoom Webhook Endpoint
-- `GET /health` – Healthcheck
-- Serviceware-Mock: `/PhoneBox/TelephonyHook/OnCallConnected` und `/PhoneBox/TelephonyHook/OnCallDisconnected`
+# Anwendung starten
+npm start
+```
 
-## Konfigurationsdateien
-- `.env` – Umgebungsvariablen (siehe `example.env`)
-- `docker-compose.yml` – Multi-Service-Setup
-- `Dockerfile` – App-Container
-- `.gitignore` – ignoriert sensible Daten und node_modules
+## Umgebungsvariablen
+Die Anwendung erfordert die folgenden Umgebungsvariablen:
+
+```
+# Zoom Konfiguration
+ZOOM_SECRET_TOKEN=          # Secret Token für Zoom Webhook-Validierung
+ZOOM_VERIFICATION_TOKEN=    # Verification Token für Zoom URL-Validierung
+
+# Serviceware API Konfiguration
+SERVICEWARE_API_URL=        # Basis-URL der Serviceware API
+SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED= # Endpoint für Anrufverbindungen
+SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED=     # Endpoint für beendete Anrufe
+SERVICEWARE_SHARED_SECRET=  # Shared Secret für Serviceware API-Authentifizierung
+
+# Logging-Konfiguration
+LOG_LEVEL=info              # Log-Level (debug, info, warn, error)
+LOG_DIR=/tmp/logs           # Verzeichnis für Log-Dateien
+```
+
+## Docker-Deployment
+Die Anwendung kann einfach mit Docker deployed werden:
+
+```bash
+# Docker-Image bauen
+docker compose build
+
+# Container starten
+docker compose up -d
+```
+
+### Hinweis zur Docker-Konfiguration
+Die Anwendung verwendet in Docker `/tmp/logs` als Verzeichnis für Log-Dateien. Stellen Sie sicher, dass die entsprechenden Umgebungsvariablen in Ihrer Docker-Konfiguration gesetzt sind.
+
+## API-Endpunkte
+
+### Health Check
+- **GET** `/health`
+  - Liefert "OK" mit Status 200, wenn der Service funktioniert
+
+### Zoom Webhook-Endpunkt
+- **POST** `/zoom-phone-call-events`
+  - Verarbeitet eingehende Zoom Phone-Ereignisse
+  - Erfordert korrekte Zoom-Signatur im Header
 
 ## Entwicklung
-- Quellcode: `index.js`, Typen: `index.d.ts`
-- Mock-Server: `mock-server/mock.js`
+Die Anwendung basiert auf Express.js und nutzt folgende Haupttechnologien:
+- Express.js für die API
+- Winston für das Logging
+- Axios für HTTP-Anfragen
+- Helmet, CORS und Rate Limiting für Sicherheit
 
-## Sicherheit
-- Nutzt aktuelle Node.js-Alpine-Images
-- Healthchecks und Logging integriert
-- Shared Secret für Serviceware-Webhook
+### Debugging
+Zum Aktivieren ausführlicherer Logs setzen Sie die Umgebungsvariable `LOG_LEVEL=debug`.
 
 ## Lizenz
-ISC
+[Hier Lizenzinformationen einfügen]
