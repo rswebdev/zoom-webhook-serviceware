@@ -342,6 +342,6 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body.message).toBe('Authorized');
-    expect(logger.error).toBeCalled();
+    expect(logger.error).toHaveBeenCalled();
   });
 });
