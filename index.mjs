@@ -35,18 +35,26 @@ const hashedSignature = (secret, timestamp, message) => {
   return `v0=${hashForVerify}`;
 };
 
+const SERVICEWARE_URL = process.env.SERVICEWARE_API_URL ||  'http://127.0.0.1:4000';
+const SHARED_SECRET = process.env.SERVICEWARE_SHARED_SECRET ||  'test';
+const ZOOM_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN ||  'zoom_secret';
+const WEBHOOK_ENDPOINT = process.env.ZOOM_EVENT_SUBSCRIBER_ENDPOINT ||  '/zoom-phone-call-event';
+const CONNECT_ENDPOINT =
+  process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED || 
+  '/PhoneBox/TelephonyHook/OnCallConnected';
+const DISCONNECT_ENDPOINT =
+  process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED ||  '/PhoneBox/TelephonyHook/OnCallDisconnected';
+
 const postToServiceware = async (connectWebHook, data) => {
   const webhook =
-    process.env.SERVICEWARE_API_URL +
-    (connectWebHook
-      ? process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED
-      : process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED);
+    SERVICEWARE_URL +
+    (connectWebHook ? CONNECT_ENDPOINT : DISCONNECT_ENDPOINT);
 
   await axios
     .post(webhook, data, {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.SERVICEWARE_SHARED_SECRET}`,
+        Authorization: `Bearer ${SHARED_SECRET}`,
       },
     })
     .then(() => {
@@ -92,7 +100,7 @@ const webHookHandler = async (req, res, secretToken) => {
   if (hZoomSignature === verificationSignature) {
     logger.debug('Signature verified successfully');
     if (bEvent === 'endpoint.url_validation') {
-      const hashForValidate = createHmac('sha256', process.env.ZOOM_SECRET_TOKEN)
+      const hashForValidate = createHmac('sha256', ZOOM_SECRET_TOKEN)
         .update(bPayload.plainToken)
         .digest('hex');
 
@@ -161,9 +169,9 @@ const webHookHandler = async (req, res, secretToken) => {
 };
 
 app.post(
-  process.env.ZOOM_EVENT_SUBSCRIBER_ENDPOINT,
+  WEBHOOK_ENDPOINT,
   json(),
-  async (req, res) => await webHookHandler(req, res, process.env.ZOOM_SECRET_TOKEN)
+  async (req, res) => await webHookHandler(req, res, ZOOM_SECRET_TOKEN)
 );
 
 export default app;
