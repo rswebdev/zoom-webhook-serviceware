@@ -35,20 +35,18 @@ const hashedSignature = (secret, timestamp, message) => {
   return `v0=${hashForVerify}`;
 };
 
-const SERVICEWARE_URL = process.env.SERVICEWARE_API_URL ||  'http://127.0.0.1:4000';
-const SHARED_SECRET = process.env.SERVICEWARE_SHARED_SECRET ||  'test';
-const ZOOM_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN ||  'zoom_secret';
-const WEBHOOK_ENDPOINT = process.env.ZOOM_EVENT_SUBSCRIBER_ENDPOINT ||  '/zoom-phone-call-event';
+const SERVICEWARE_URL = process.env.SERVICEWARE_API_URL || 'http://127.0.0.1:4000';
+const SHARED_SECRET = process.env.SERVICEWARE_SHARED_SECRET || 'test';
+const ZOOM_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN || 'zoom_secret';
+const WEBHOOK_ENDPOINT = process.env.ZOOM_EVENT_SUBSCRIBER_ENDPOINT || '/zoom-phone-call-event';
 const CONNECT_ENDPOINT =
-  process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED || 
+  process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED ||
   '/PhoneBox/TelephonyHook/OnCallConnected';
 const DISCONNECT_ENDPOINT =
-  process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED ||  '/PhoneBox/TelephonyHook/OnCallDisconnected';
+  process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED || '/PhoneBox/TelephonyHook/OnCallDisconnected';
 
 const postToServiceware = async (connectWebHook, data) => {
-  const webhook =
-    SERVICEWARE_URL +
-    (connectWebHook ? CONNECT_ENDPOINT : DISCONNECT_ENDPOINT);
+  const webhook = SERVICEWARE_URL + (connectWebHook ? CONNECT_ENDPOINT : DISCONNECT_ENDPOINT);
 
   await axios
     .post(webhook, data, {
