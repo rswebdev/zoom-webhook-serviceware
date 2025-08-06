@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../index.js').default || require('../index.js');
+const app = require('../index.mjs').default || require('../index.mjs');
 
 describe('Healthcheck', () => {
   it('should return 200 OK', async () => {
