@@ -10,6 +10,7 @@
     "dev": "nodemon server.js",
     "lint": "eslint . --ext .js,.mjs",
     "lint:fix": "eslint . --ext .js,.mjs --fix",
+    "format": "npx prettier --write '**/*.{js,mjs,json,yml}'",
     "mock": "node mock.cjs"
   },
   "author": "Robert Schmidt",
