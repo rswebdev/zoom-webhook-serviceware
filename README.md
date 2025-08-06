@@ -44,7 +44,7 @@ Die Anwendung erfordert die folgenden Umgebungsvariablen:
 ```
 # Zoom Konfiguration
 ZOOM_SECRET_TOKEN=          # Secret Token für Zoom Webhook-Validierung
-ZOOM_VERIFICATION_TOKEN=    # Verification Token für Zoom URL-Validierung
+ZOOM_EVENT_SUBSCRIBER_ENDPOINT = # Endpunkt für Zoom Phone Events (z.B. `/zoom-phone-call-event`)
 
 # Serviceware API Konfiguration
 SERVICEWARE_API_URL=        # Basis-URL der Serviceware API

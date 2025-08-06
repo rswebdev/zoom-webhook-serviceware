@@ -76,9 +76,9 @@ const webHookHandler = async (req, res, secretToken) => {
   let response = { message: '', status: 500 };
 
   if (hZoomSignature === verificationSignature) {
-    // logger.debug('Signature verified successfully');
+    logger.debug('Signature verified successfully');
     if (bEvent === 'endpoint.url_validation') {
-      const hashForValidate = createHmac('sha256', process.env.ZOOM_VERIFICATION_TOKEN).update(bPayload.plainToken).digest('hex');
+      const hashForValidate = createHmac('sha256', process.env.ZOOM_SECRET_TOKEN).update(bPayload.plainToken).digest('hex');
 
       response = {
         message: {
@@ -143,6 +143,6 @@ const webHookHandler = async (req, res, secretToken) => {
   }
 };
 
-app.post('/zoom-phone-call-events', json(), async (req, res) => await webHookHandler(req, res, process.env.ZOOM_SECRET_TOKEN));
+app.post(process.env.ZOOM_EVENT_SUBSCRIBER_ENDPOINT, json(), async (req, res) => await webHookHandler(req, res, process.env.ZOOM_SECRET_TOKEN));
 
 export default app;
