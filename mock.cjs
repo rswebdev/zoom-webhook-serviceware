@@ -1,10 +1,11 @@
 // Minimaler Mock-Server für Serviceware Webhook
 const express = require('express');
 const bodyParser = require('body-parser');
-const dotenv = require('dotenv');
-const logger = require('./logger.mjs').default; // Importiere den Logger
 
+const dotenv = require('dotenv');
 dotenv.config();
+
+const logger = require('./logger.mjs').default; // Importiere den Logger
 
 const app = express();
 app.use(bodyParser.json());
