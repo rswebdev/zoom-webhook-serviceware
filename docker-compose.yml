@@ -5,12 +5,12 @@ services:
       dockerfile: Dockerfile
     image: zoom-webhook-serviceware:latest
     ports:
-      - "3000:3000"
+      - '3000:3000'
     env_file:
       - .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/health']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -24,7 +24,7 @@ services:
   ngrok:
     image: ngrok/ngrok:latest
     restart: unless-stopped
-    command: ["http", "zoom-webhook-serviceware:3000", "--url=${NGROK_URL}"]
+    command: ['http', 'zoom-webhook-serviceware:3000', '--url=${NGROK_URL}']
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
       - NGROK_URL=${NGROK_URL}
@@ -33,7 +33,7 @@ services:
     profiles:
       - dev
     ports:
-      - "4040:4040" # Web-UI für ngrok
+      - '4040:4040' # Web-UI für ngrok
 
   serviceware-mock:
     image: node:lts-alpine3.22
@@ -43,12 +43,12 @@ services:
       - ./logger.mjs:/mock/logger.mjs
       - ./mock.cjs:/mock/mock.cjs
       - ./node_modules:/mock/node_modules
-    command: ["node", "mock.cjs"]
+    command: ['node', 'mock.cjs']
     environment:
       - SERVICEWARE_SHARED_SECRET=${SERVICEWARE_SHARED_SECRET}
       - PORT=4000
     ports:
-      - "4000:4000"
+      - '4000:4000'
     profiles:
       - dev
     deploy:

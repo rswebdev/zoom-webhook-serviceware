@@ -11,8 +11,11 @@ const app = express();
 app.use(bodyParser.json());
 
 const SHARED_SECRET = process.env.SERVICEWARE_SHARED_SECRET || 'test';
-const CALL_CONNECT_ENDPOINT = process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED || '/PhoneBox/TelephonyHook/OnCallConnected';
-const CALL_DISCONNECT_ENDPOINT = process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED || '/PhoneBox/TelephonyHook/OnCallDisconnected';
+const CALL_CONNECT_ENDPOINT =
+  process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED ||
+  '/PhoneBox/TelephonyHook/OnCallConnected';
+const CALL_DISCONNECT_ENDPOINT =
+  process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED || '/PhoneBox/TelephonyHook/OnCallDisconnected';
 const PORT = process.env.PORT || 4000;
 
 // Middleware zur Prüfung des Shared Secret

@@ -2,7 +2,6 @@ import express, { json } from 'express';
 import { createHmac } from 'crypto';
 import * as dotenv from 'dotenv';
 import axios from 'axios';
-import morgan from 'morgan';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
@@ -24,10 +23,10 @@ app.use(rateLimit({ windowMs: 60 * 1000, max: 60 }));
 app.get('/health', (req, res) => res.status(200).send('OK'));
 
 /**
- * 
- * @param {string} secret 
- * @param {string} timestamp 
- * @param {string} message 
+ *
+ * @param {string} secret
+ * @param {string} timestamp
+ * @param {string} message
  * @returns {string}
  */
 const hashedSignature = (secret, timestamp, message) => {
@@ -37,38 +36,53 @@ const hashedSignature = (secret, timestamp, message) => {
 };
 
 const postToServiceware = async (connectWebHook, data) => {
-  const webhook = process.env.SERVICEWARE_API_URL + (connectWebHook ? process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED : process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED);
+  const webhook =
+    process.env.SERVICEWARE_API_URL +
+    (connectWebHook
+      ? process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED
+      : process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED);
 
-  await axios.post(webhook, data, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.SERVICEWARE_SHARED_SECRET}`
-    }
-  }).then(() => {
-    logger.info(`${connectWebHook ? 'OnCallConnect' : 'OnCallDisconnect'} event posted to Serviceware successfully`);
-  }).catch((error) => {
-    logger.error(`Error posting ${connectWebHook ? 'OnCallConnect' : 'OnCallDisconnect'} event to Serviceware:`, error);
-  });
-}
+  await axios
+    .post(webhook, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.SERVICEWARE_SHARED_SECRET}`,
+      },
+    })
+    .then(() => {
+      logger.info(
+        `${connectWebHook ? 'OnCallConnect' : 'OnCallDisconnect'} event posted to Serviceware successfully`
+      );
+    })
+    .catch((error) => {
+      logger.error(
+        `Error posting ${connectWebHook ? 'OnCallConnect' : 'OnCallDisconnect'} event to Serviceware:`,
+        error
+      );
+    });
+};
 
 /**
- * 
- * @param {Request<any, any, WebHookBody<WebHookBodyCallConnect | WebHookBodyCallDisconnect | WebHookBodyURLValidation>>} req 
- * @param {Response} res 
- * @param {string} secretToken 
+ *
+ * @param {Request<any, any, WebHookBody<WebHookBodyCallConnect | WebHookBodyCallDisconnect | WebHookBodyURLValidation>>} req
+ * @param {Response} res
+ * @param {string} secretToken
  */
 const webHookHandler = async (req, res, secretToken) => {
-  
   const hZoomSignature = req.header('x-zm-signature');
   const hZoomRequestTimestamp = req.header('x-zm-request-timestamp');
-  
+
   /**
    * @type {'endpoint.url_validation' | 'phone.caller_connected' | 'phone.caller_ended' | 'phone.callee_answered' | 'phone.callee_ended' }
    */
   const bEvent = req.body.event;
   const bPayload = req.body.payload;
 
-  const verificationSignature = hashedSignature(secretToken, hZoomRequestTimestamp, JSON.stringify(req.body));
+  const verificationSignature = hashedSignature(
+    secretToken,
+    hZoomRequestTimestamp,
+    JSON.stringify(req.body)
+  );
 
   /**
    * @type {{ message: WebHookBodyValidationResponse | 'Authorized' | 'Unauthorized' | ''; status: number }}
@@ -78,14 +92,16 @@ const webHookHandler = async (req, res, secretToken) => {
   if (hZoomSignature === verificationSignature) {
     logger.debug('Signature verified successfully');
     if (bEvent === 'endpoint.url_validation') {
-      const hashForValidate = createHmac('sha256', process.env.ZOOM_SECRET_TOKEN).update(bPayload.plainToken).digest('hex');
+      const hashForValidate = createHmac('sha256', process.env.ZOOM_SECRET_TOKEN)
+        .update(bPayload.plainToken)
+        .digest('hex');
 
       response = {
         message: {
           plainToken: bPayload.plainToken,
-          encryptedToken: hashForValidate
+          encryptedToken: hashForValidate,
         },
-        status: 200
+        status: 200,
       };
 
       res.status(response.status);
@@ -104,30 +120,31 @@ const webHookHandler = async (req, res, secretToken) => {
         fromNumber: '',
       };
 
-      const connectWebHook = bEvent === 'phone.caller_connected' || bEvent === 'phone.callee_answered';
+      const connectWebHook =
+        bEvent === 'phone.caller_connected' || bEvent === 'phone.callee_answered';
 
       if (bEvent === 'phone.caller_connected') {
         // POST to Serviceware OnCallConnect
-        postData.toNumber = bPayload.object.callee.phone_number
-        postData.fromNumber = bPayload.object.caller.phone_number
+        postData.toNumber = bPayload.object.callee.phone_number;
+        postData.fromNumber = bPayload.object.caller.phone_number;
         postToServiceware(connectWebHook, postData);
         return;
       } else if (bEvent === 'phone.caller_ended') {
         // POST to Serviceware OnCallDisconnect
-        postData.toNumber = bPayload.object.callee.phone_number
-        postData.fromNumber = bPayload.object.caller.phone_number
+        postData.toNumber = bPayload.object.callee.phone_number;
+        postData.fromNumber = bPayload.object.caller.phone_number;
         postToServiceware(connectWebHook, postData);
         return;
       } else if (bEvent === 'phone.callee_answered') {
         // POST to Serviceware OnCallConnect
-        postData.toNumber = bPayload.object.callee.phone_number
-        postData.fromNumber = bPayload.object.caller.phone_number
+        postData.toNumber = bPayload.object.callee.phone_number;
+        postData.fromNumber = bPayload.object.caller.phone_number;
         postToServiceware(connectWebHook, postData);
         return;
       } else if (bEvent === 'phone.callee_ended') {
         // POST to Serviceware OnCallDisconnect
-        postData.toNumber = bPayload.object.callee.phone_number
-        postData.fromNumber = bPayload.object.caller.phone_number
+        postData.toNumber = bPayload.object.callee.phone_number;
+        postData.fromNumber = bPayload.object.caller.phone_number;
         postToServiceware(connectWebHook, postData);
         return;
       } else {
@@ -143,6 +160,10 @@ const webHookHandler = async (req, res, secretToken) => {
   }
 };
 
-app.post(process.env.ZOOM_EVENT_SUBSCRIBER_ENDPOINT, json(), async (req, res) => await webHookHandler(req, res, process.env.ZOOM_SECRET_TOKEN));
+app.post(
+  process.env.ZOOM_EVENT_SUBSCRIBER_ENDPOINT,
+  json(),
+  async (req, res) => await webHookHandler(req, res, process.env.ZOOM_SECRET_TOKEN)
+);
 
 export default app;

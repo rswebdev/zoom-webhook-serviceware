@@ -3,7 +3,8 @@ import fs from 'fs';
 import path from 'path';
 
 // Konfigurierbare Protokollpfade mit Umgebungsvariablen und Fallbacks
-const LOG_DIR = process.env.LOG_DIR || (process.env.NODE_ENV === 'production' ? '/tmp/logs' : 'logs');
+const LOG_DIR =
+  process.env.LOG_DIR || (process.env.NODE_ENV === 'production' ? '/tmp/logs' : 'logs');
 
 // Erstellen Sie das Verzeichnis, falls es nicht existiert, mit Fehlerbehandlung
 try {
@@ -33,11 +34,8 @@ try {
 // Logger-Konfiguration
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+  transports,
 });
 
 export default logger;

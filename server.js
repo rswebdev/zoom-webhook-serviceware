@@ -5,7 +5,7 @@ import logger from './logger.mjs';
 
 const PORT = process.env.PORT || 3000;
 
-app.set('trust proxy', 1 /* number of proxies between user and server */)
+app.set('trust proxy', 1 /* number of proxies between user and server */);
 
 app.listen(PORT, () => {
   logger.info(`Server läuft auf Port ${PORT}`);

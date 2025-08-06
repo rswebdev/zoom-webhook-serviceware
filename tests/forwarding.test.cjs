@@ -1,3 +1,4 @@
+/* eslint-env jest */
 const request = require('supertest');
 const app = require('../index.mjs').default;
 const nock = require('nock');
@@ -8,8 +9,11 @@ const SERVICEWARE_URL = process.env.SERVICEWARE_API_URL || 'http://serviceware-m
 const SHARED_SECRET = process.env.SERVICEWARE_SHARED_SECRET || 'test';
 const ZOOM_SECRET_TOKEN = process.env.ZOOM_SECRET_TOKEN || 'zoom_secret';
 const WEBHOOK_ENDPOINT = process.env.ZOOM_EVENT_SUBSCRIBER_ENDPOINT || '/zoom-phone-call-events';
-const CONNECT_ENDPOINT = process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED || '/PhoneBox/TelephonyHook/OnCallConnected';
-const DISCONNECT_ENDPOINT = process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED || '/PhoneBox/TelephonyHook/OnCallDisconnected';
+const CONNECT_ENDPOINT =
+  process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_CONNECTED ||
+  '/PhoneBox/TelephonyHook/OnCallConnected';
+const DISCONNECT_ENDPOINT =
+  process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED || '/PhoneBox/TelephonyHook/OnCallDisconnected';
 
 /**
  * Hilfsfunktion zum Erstellen einer gültigen Zoom-Signatur
@@ -17,10 +21,13 @@ const DISCONNECT_ENDPOINT = process.env.SERVICEWARE_WH_ENDPOINT_ON_CALL_ENDED ||
 function createZoomSignature(payload, secret = ZOOM_SECRET_TOKEN, validSignature = true) {
   const timestamp = Date.now().toString();
   const verificationMessage = `v0:${timestamp}:${JSON.stringify(payload)}`;
-  const hashForVerify = crypto.createHmac('sha256', secret).update(verificationMessage).digest('hex');
+  const hashForVerify = crypto
+    .createHmac('sha256', secret)
+    .update(verificationMessage)
+    .digest('hex');
   return {
     signature: validSignature ? `v0=${hashForVerify}` : 'v0=invalid_signature',
-    timestamp
+    timestamp,
   };
 }
 
@@ -30,11 +37,11 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
     nock.disableNetConnect();
     nock.enableNetConnect('127.0.0.1');
   });
-  
+
   afterEach(() => {
     nock.cleanAll();
   });
-  
+
   afterAll(() => {
     nock.enableNetConnect();
   });
@@ -44,13 +51,15 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
     const validationPayload = {
       event: 'endpoint.url_validation',
       payload: {
-        plainToken: 'some_plain_token'
-      }
+        plainToken: 'some_plain_token',
+      },
     };
 
     const { signature, timestamp } = createZoomSignature(validationPayload);
-    const expectedHash = crypto.createHmac('sha256', ZOOM_SECRET_TOKEN)
-      .update(validationPayload.payload.plainToken).digest('hex');
+    const expectedHash = crypto
+      .createHmac('sha256', ZOOM_SECRET_TOKEN)
+      .update(validationPayload.payload.plainToken)
+      .digest('hex');
 
     const response = await request(app)
       .post(WEBHOOK_ENDPOINT)
@@ -61,7 +70,7 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
       plainToken: validationPayload.payload.plainToken,
-      encryptedToken: expectedHash
+      encryptedToken: expectedHash,
     });
   });
 
@@ -69,15 +78,15 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
   it('leitet Caller Connected Events an Serviceware weiter', async () => {
     const mockServiceware = nock(SERVICEWARE_URL, {
       reqheaders: {
-        'authorization': `Bearer ${SHARED_SECRET}`,
+        authorization: `Bearer ${SHARED_SECRET}`,
         'content-type': 'application/json',
-      }
+      },
     })
-    .post(CONNECT_ENDPOINT, {
-      toNumber: '+49123456789',
-      fromNumber: '+4987654321'
-    })
-    .reply(200, { status: 'success' });
+      .post(CONNECT_ENDPOINT, {
+        toNumber: '+49123456789',
+        fromNumber: '+4987654321',
+      })
+      .reply(200, { status: 'success' });
 
     const callerConnectedEvent = {
       event: 'phone.caller_connected',
@@ -88,9 +97,9 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
           callee: { phone_number: '+49123456789' },
           caller: { phone_number: '+4987654321' },
           ringing_start_time: '2023-01-01T12:00:00Z',
-          connected_start_time: '2023-01-01T12:00:05Z'
-        }
-      }
+          connected_start_time: '2023-01-01T12:00:05Z',
+        },
+      },
     };
 
     const { signature, timestamp } = createZoomSignature(callerConnectedEvent);
@@ -110,15 +119,15 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
   it('leitet Caller Ended Events an Serviceware weiter', async () => {
     const mockServiceware = nock(SERVICEWARE_URL, {
       reqheaders: {
-        'authorization': `Bearer ${SHARED_SECRET}`,
+        authorization: `Bearer ${SHARED_SECRET}`,
         'content-type': 'application/json',
-      }
+      },
     })
-    .post(DISCONNECT_ENDPOINT, {
-      toNumber: '+49123456789',
-      fromNumber: '+4987654321'
-    })
-    .reply(200, { status: 'success' });
+      .post(DISCONNECT_ENDPOINT, {
+        toNumber: '+49123456789',
+        fromNumber: '+4987654321',
+      })
+      .reply(200, { status: 'success' });
 
     const callerEndedEvent = {
       event: 'phone.caller_ended',
@@ -131,9 +140,9 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
           ringing_start_time: '2023-01-01T12:00:00Z',
           answer_start_time: '2023-01-01T12:00:05Z',
           call_end_time: '2023-01-01T12:05:00Z',
-          handup_result: 'Call connected'
-        }
-      }
+          handup_result: 'Call connected',
+        },
+      },
     };
 
     const { signature, timestamp } = createZoomSignature(callerEndedEvent);
@@ -153,15 +162,15 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
   it('leitet Callee Answered Events an Serviceware weiter', async () => {
     const mockServiceware = nock(SERVICEWARE_URL, {
       reqheaders: {
-        'authorization': `Bearer ${SHARED_SECRET}`,
+        authorization: `Bearer ${SHARED_SECRET}`,
         'content-type': 'application/json',
-      }
+      },
     })
-    .post(CONNECT_ENDPOINT, {
-      toNumber: '+49123456789',
-      fromNumber: '+4987654321'
-    })
-    .reply(200, { status: 'success' });
+      .post(CONNECT_ENDPOINT, {
+        toNumber: '+49123456789',
+        fromNumber: '+4987654321',
+      })
+      .reply(200, { status: 'success' });
 
     const calleeAnsweredEvent = {
       event: 'phone.callee_answered',
@@ -172,9 +181,9 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
           callee: { phone_number: '+49123456789' },
           caller: { phone_number: '+4987654321' },
           ringing_start_time: '2023-01-01T12:00:00Z',
-          connected_start_time: '2023-01-01T12:00:05Z'
-        }
-      }
+          connected_start_time: '2023-01-01T12:00:05Z',
+        },
+      },
     };
 
     const { signature, timestamp } = createZoomSignature(calleeAnsweredEvent);
@@ -194,15 +203,15 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
   it('leitet Callee Ended Events an Serviceware weiter', async () => {
     const mockServiceware = nock(SERVICEWARE_URL, {
       reqheaders: {
-        'authorization': `Bearer ${SHARED_SECRET}`,
+        authorization: `Bearer ${SHARED_SECRET}`,
         'content-type': 'application/json',
-      }
+      },
     })
-    .post(DISCONNECT_ENDPOINT, {
-      toNumber: '+49123456789',
-      fromNumber: '+4987654321'
-    })
-    .reply(200, { status: 'success' });
+      .post(DISCONNECT_ENDPOINT, {
+        toNumber: '+49123456789',
+        fromNumber: '+4987654321',
+      })
+      .reply(200, { status: 'success' });
 
     const calleeEndedEvent = {
       event: 'phone.callee_ended',
@@ -215,9 +224,9 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
           ringing_start_time: '2023-01-01T12:00:00Z',
           answer_start_time: '2023-01-01T12:00:05Z',
           call_end_time: '2023-01-01T12:05:00Z',
-          handup_result: 'Call connected'
-        }
-      }
+          handup_result: 'Call connected',
+        },
+      },
     };
 
     const { signature, timestamp } = createZoomSignature(calleeEndedEvent);
@@ -243,9 +252,9 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
         object: {
           call_id: 'call123',
           callee: { phone_number: '+49123456789' },
-          caller: { phone_number: '+4987654321' }
-        }
-      }
+          caller: { phone_number: '+4987654321' },
+        },
+      },
     };
 
     const { signature, timestamp } = createZoomSignature(unsupportedEvent);
@@ -272,12 +281,16 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
           callee: { phone_number: '+49123456789' },
           caller: { phone_number: '+4987654321' },
           ringing_start_time: '2023-01-01T12:00:00Z',
-          connected_start_time: '2023-01-01T12:00:05Z'
-        }
-      }
+          connected_start_time: '2023-01-01T12:00:05Z',
+        },
+      },
     };
 
-    const { signature: invalidSignature, timestamp } = createZoomSignature(event, ZOOM_SECRET_TOKEN, false);
+    const { signature: invalidSignature, timestamp } = createZoomSignature(
+      event,
+      ZOOM_SECRET_TOKEN,
+      false
+    );
 
     const response = await request(app)
       .post(WEBHOOK_ENDPOINT)
@@ -291,21 +304,20 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
 
   // Test 8: Serviceware Mock Server nicht erreichbar
   it('gibt 500 zurück, wenn Serviceware Mock Server nicht erreichbar ist', async () => {
-
     const logger = require('../logger.mjs').default;
     jest.spyOn(logger, 'error').mockImplementation(() => {});
 
-    const mockServiceware = nock(SERVICEWARE_URL, {
+    nock(SERVICEWARE_URL, {
       reqheaders: {
-        'authorization': `Bearer ${SHARED_SECRET}`,
+        authorization: `Bearer ${SHARED_SECRET}`,
         'content-type': 'application/json',
-      }
+      },
     })
-    .post(DISCONNECT_ENDPOINT, {
-      toNumber: '+49123456789',
-      fromNumber: '+4987654321'
-    })
-    .reply(500, { status: 'error' });
+      .post(DISCONNECT_ENDPOINT, {
+        toNumber: '+49123456789',
+        fromNumber: '+4987654321',
+      })
+      .reply(500, { status: 'error' });
 
     const callerConnectedEvent = {
       event: 'phone.caller_connected',
@@ -316,11 +328,11 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
           callee: { phone_number: '+49123456789' },
           caller: { phone_number: '+4987654321' },
           ringing_start_time: '2023-01-01T12:00:00Z',
-          connected_start_time: '2023-01-01T12:00:05Z'
-        }
-      }
+          connected_start_time: '2023-01-01T12:00:05Z',
+        },
+      },
     };
-    
+
     const { signature, timestamp } = createZoomSignature(callerConnectedEvent);
     const response = await request(app)
       .post(WEBHOOK_ENDPOINT)
@@ -330,7 +342,6 @@ describe('Zoom Event Verarbeitung und Weiterleitung', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body.message).toBe('Authorized');
-    
     expect(logger.error).toBeCalled();
   });
 });

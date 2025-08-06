@@ -1,9 +1,11 @@
 # Zoom Webhook Serviceware
 
 ## Übersicht
+
 Dieser Service fungiert als Webhook-Handler für Zoom Phone Events und leitet die relevanten Informationen an Serviceware weiter. Er verarbeitet eingehende Anrufereignisse und sendet sie an die entsprechenden Serviceware-Endpunkte.
 
 ## Funktionen
+
 - Empfang und Verarbeitung von Zoom Phone Webhook-Events
 - Validierung der Zoom-Webhook-Signatur für Sicherheit
 - Weiterleitung spezifischer Anrufereignisse an Serviceware
@@ -17,11 +19,13 @@ Dieser Service fungiert als Webhook-Handler für Zoom Phone Events und leitet di
 ## Installation
 
 ### Voraussetzungen
+
 - Node.js (empfohlen: v16 oder höher)
 - npm oder yarn
 - Docker (optional, für Container-Deployment)
 
 ### Lokale Installation
+
 ```bash
 # Repository klonen
 git clone [repository-url]
@@ -39,6 +43,7 @@ npm start
 ```
 
 ## Umgebungsvariablen
+
 Die Anwendung erfordert die folgenden Umgebungsvariablen:
 
 ```
@@ -63,6 +68,7 @@ LOG_DIR=/tmp/logs           # Verzeichnis für Log-Dateien
 ```
 
 ## Docker-Deployment
+
 Die Anwendung kann einfach mit Docker deployed werden:
 
 ```bash
@@ -74,27 +80,33 @@ docker compose up -d
 ```
 
 ### Hinweis zur Docker-Konfiguration
+
 Die Anwendung verwendet in Docker `/tmp/logs` als Verzeichnis für Log-Dateien. Stellen Sie sicher, dass die entsprechenden Umgebungsvariablen in Ihrer Docker-Konfiguration gesetzt sind.
 
 ## API-Endpunkte
 
 ### Health Check
+
 - **GET** `/health`
   - Liefert "OK" mit Status 200, wenn der Service funktioniert
 
 ### Zoom Webhook-Endpunkt
+
 - **POST** `/zoom-phone-call-events`
   - Verarbeitet eingehende Zoom Phone-Ereignisse
   - Erfordert korrekte Zoom-Signatur im Header
 
 ## Entwicklung
+
 Die Anwendung basiert auf Express.js und nutzt folgende Haupttechnologien:
+
 - Express.js für die API
 - Winston für das Logging
 - Axios für HTTP-Anfragen
 - Helmet, CORS und Rate Limiting für Sicherheit
 
 ### Ngrok für lokale Entwicklung
+
 Das Projekt verwendet ngrok im Entwicklungsprofil, um lokale Webhooks für Zoom zugänglich zu machen. Mit ngrok können Sie Ihre lokale Entwicklungsumgebung über einen öffentlich zugänglichen Endpunkt testen:
 
 - **Automatische Konfiguration**: Wenn Sie `docker compose --profile dev up` ausführen, wird ngrok automatisch gestartet und erstellt einen sicheren Tunnel zu Ihrem lokalen Service.
@@ -105,7 +117,9 @@ Das Projekt verwendet ngrok im Entwicklungsprofil, um lokale Webhooks für Zoom 
 Diese Integration ermöglicht das einfache Testen von Webhook-Ereignissen während der Entwicklung, ohne die Notwendigkeit, Ihre Anwendung in einer öffentlich zugänglichen Umgebung bereitzustellen.
 
 ### Debugging
+
 Zum Aktivieren ausführlicherer Logs setzen Sie die Umgebungsvariable `LOG_LEVEL=debug`.
 
 ## Lizenz
+
 [Hier Lizenzinformationen einfügen]
